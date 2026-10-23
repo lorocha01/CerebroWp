@@ -173,7 +173,7 @@ Registro do que vi ao ler código e metadados. Não testei nada.
 
 ## 9. Perguntas em aberto
 
-1. **Infraestrutura:** posso criar o projeto `mundo-wp-brain` na organização Supabase `iilpulcoruskbleurexq` (região sa-east-1)? Há custo de plano (Pro) a aprovar?
+1. ~~**Infraestrutura**~~ Respondida: o Cérebro fica no projeto Supabase `piiozonbqdewleihldwz`. Falta liberar o acesso a ele para o conector desta sessão.
 2. **Lista oficial de unidades:** existe uma planilha mestra (código Unilab, CNPJ, nome, marca, região)? Se não existir, posso usar a lista do Unilab que vem no DRE como referência e gerar uma planilha para validação?
 3. **Conflitos de código:** o que é o "96 APOIO PASTEUR" e o "87 HOMECARE ENDO 2" no Ativos? O "1 Santa Helena Viamópolis" do COMPRAS é o 9K?
 4. **Empresa x marca:** Conte e Santa Helena (POA) são CNPJs próprios com marca Endocrimeta? O posto 14 "SANTA HELENA" de Lages é só um bairro, sem relação com o laboratório Santa Helena?
