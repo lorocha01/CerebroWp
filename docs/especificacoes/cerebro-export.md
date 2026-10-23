@@ -30,6 +30,17 @@ x-cerebro-key: <chave>
 400 parâmetro inválido · 401 chave inválida · 405 método não permitido · 500 erro de consulta
 ```
 
+## Situação
+
+| Fonte | Aplicada em | Commit no Lovable | Secret `CEREBRO_READ_KEY` |
+|---|---|---|---|
+| METAS | 23/10/2026 | `4d78bf5` | pendente |
+| Ativos | 23/10/2026 | `393eadc` | pendente |
+| Wiki | 23/10/2026 | `18d32a6` | pendente |
+
+Os diffs foram conferidos: só os três arquivos da função e o bloco no
+`config.toml`. Sem o secret, a função responde 401 a qualquer chamada.
+
 ## Como aplicar em cada fonte (Fase 1: METAS, Ativos, Wiki)
 
 1. Criar o secret `CEREBRO_READ_KEY` no projeto, com uma chave aleatória de 48 caracteres. Uma chave diferente por fonte, guardada também nos secrets do Cérebro (`CEREBRO_KEY_<FONTE>`). Eu não vejo nem guardo essa chave.
