@@ -1,0 +1,538 @@
+<title>Cérebro do Mundo WP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: um "céu" escuro de partículas com os agentes em órbita do Diretor IA; abaixo, o detalhe do agente e a fila de achados.
+   Visual escuro único, por escolha (referência enviada pelo usuário). */
+:root {
+  color-scheme: dark;
+  --bg: #07060c;
+  --stage: #0b0a12;
+  --line: #24212f;
+  --fg: #eeeaf6;
+  --muted: #9a93ad;
+  --teal: #3fe0b2;
+  --magenta: #c45bdc;
+  --violet: #9d84ff;
+  --red: #ff5b3d;
+  --amber: #f4b13e;
+  --grey: #6f6a80;
+  --badge: #f5c84a;
+  --badge-ink: #1a1405;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-display); font-size: 15px; line-height: 1.5; }
+
+.wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 20px;
+}
+
+header.topo { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+header.topo h1 { margin: 0; font-size: clamp(24px, 3.2vw, 34px); font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+header.topo p { margin: 0; color: var(--muted); font-family: var(--font-mono); font-size: 12px; max-width: 62ch; }
+
+/* Palco ---------------------------------------------------------------- */
+.palco {
+  position: relative;
+  height: clamp(560px, 72vh, 760px);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 50% 46%, #15112a 0%, var(--stage) 55%, var(--bg) 100%);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  isolation: isolate;
+}
+.palco canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.selo {
+  position: absolute; top: 14px; left: 14px; z-index: 3;
+  background: var(--badge); color: var(--badge-ink);
+  font-family: var(--font-mono); font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
+  padding: 6px 12px; border-radius: 8px; border: 2px solid var(--badge-ink);
+  box-shadow: 3px 3px 0 var(--badge-ink);
+}
+
+.legenda {
+  position: absolute; left: 14px; right: 14px; bottom: 12px; z-index: 3;
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+}
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.legenda .tracejado { width: 18px; height: 0; border-top: 1px dashed var(--muted); border-radius: 0; }
+
+/* Nós ------------------------------------------------------------------ */
+#nos { position: absolute; inset: 0; z-index: 2; }
+.no {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer;
+  transform: translate(-9px, -9px);
+}
+.no .ponto {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--cor); border: 3px solid #f6f3ff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cor) 25%, transparent), 0 0 22px var(--cor);
+  transition: transform .2s ease;
+}
+.no .cartao {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px 7px 8px; border-radius: 12px;
+  background: color-mix(in srgb, var(--stage) 78%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+  width: 214px;
+  text-align: left;
+  transition: border-color .2s ease, background .2s ease;
+}
+.no .icone {
+  flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+  background: #16131f; color: var(--teal); border: 1px solid var(--line);
+}
+.no .icone svg { width: 16px; height: 16px; }
+.no .textos { min-width: 0; display: grid; }
+.no .nome { font-weight: 600; font-size: 15px; line-height: 1.2; }
+.no .sub { font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.no.esquerda { flex-direction: row-reverse; transform: translate(calc(-100% + 9px), -9px); }
+.no:hover .cartao, .no[aria-pressed="true"] .cartao { border-color: color-mix(in srgb, var(--cor) 70%, var(--line)); background: color-mix(in srgb, #1a1626 85%, transparent); }
+.no:hover .ponto, .no[aria-pressed="true"] .ponto { transform: scale(1.18); }
+.no:focus-visible { outline: none; }
+.no:focus-visible .cartao { outline: 2px solid var(--badge); outline-offset: 2px; }
+
+.no.centro { flex-direction: column; gap: 8px; transform: translate(-50%, -9px); }
+.no.centro .ponto { width: 22px; height: 22px; border-color: #fff; }
+.no.centro .cartao { width: auto; }
+.no.centro .icone { color: var(--badge); }
+
+/* Painel --------------------------------------------------------------- */
+.painel { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.bloco { background: var(--stage); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.bloco h2 { margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bloco h3 { margin: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.bloco p { margin: 0; max-width: 65ch; }
+
+.pilula { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 12px; padding: 4px 9px; border-radius: 8px; background: #16131f; border: 1px solid var(--line); color: var(--fg); }
+
+.metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.metrica { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+.metrica b { font-size: clamp(17px, 4.4vw, 22px); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.metrica span { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+.achados { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.achado { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 12px 10px 0; border-radius: 10px; background: #100e18; }
+.achado::before { content: ""; align-self: stretch; border-radius: 0 3px 3px 0; background: var(--sev); }
+.achado .valor { font-family: var(--font-mono); font-size: 13px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--sev); }
+.achado small { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+button.achado { width: 100%; border: 1px solid transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+button.achado:hover { border-color: var(--line); }
+button.achado:focus-visible { outline: 2px solid var(--badge); outline-offset: 2px; }
+
+.nota { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .painel { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .palco { height: 600px; border-radius: 16px; }
+  .legenda { font-size: 10px; gap: 4px 10px; }
+}
+/* Palco estreito (classe posta pelo script): só ponto e nome, sem cartão. */
+.palco.compacto .no, .palco.compacto .no.esquerda { flex-direction: column; gap: 6px; transform: translate(-50%, -9px); }
+.palco.compacto .no .cartao { width: auto; max-width: 104px; padding: 0; background: none; border: 0; backdrop-filter: none; justify-content: center; text-align: center; }
+.palco.compacto .no .icone, .palco.compacto .no .sub { display: none; }
+.palco.compacto .no .nome { font-size: 12.5px; text-shadow: 0 1px 6px #000; }
+.palco.compacto .no:focus-visible .cartao { outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .no .ponto, .no .cartao { transition: none; }
+}
+</style>
+
+<main class="wrap">
+  <header class="topo">
+    <h1>Cérebro do Mundo WP</h1>
+    <p>Prévia com os dados lidos na Fase 0 (23/10/2026). Nenhum agente está conectado ao vivo ainda: as linhas tracejadas viram contínuas quando cada fonte for ligada.</p>
+  </header>
+
+  <section class="palco" id="palco" aria-label="Mapa dos agentes do Cérebro">
+    <span class="selo">AMOSTRA · CÉREBRO EM CONSTRUÇÃO</span>
+    <canvas id="ceu" aria-hidden="true"></canvas>
+    <div id="nos"></div>
+    <div class="legenda" aria-label="Legenda">
+      <span><i style="background: var(--red)"></i>alerta</span>
+      <span><i style="background: var(--amber)"></i>atenção</span>
+      <span><i style="background: var(--teal)"></i>dados mapeados</span>
+      <span><i style="background: var(--grey)"></i>sem acesso</span>
+      <span><i class="tracejado"></i>ainda sem conexão automática</span>
+    </div>
+  </section>
+
+  <section class="painel">
+    <article class="bloco" id="detalhe" aria-live="polite"></article>
+    <aside class="bloco" id="fila">
+      <h3>Fila do Diretor IA</h3>
+      <p class="nota">Achados que pedem decisão, do mais grave para o menos. Toque para abrir o agente.</p>
+      <ul class="achados" id="lista-fila"></ul>
+    </aside>
+  </section>
+</main>
+
+<script>
+(() => {
+  const ICONES = {
+    diretor: '<path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z"/>',
+    recibo: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>',
+    moeda: '<circle cx="12" cy="12" r="8"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.9 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5v11"/>',
+    alvo: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12l7-7"/>',
+    carrinho: '<path d="M3 4h2l2.5 11h10L20 8H7"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+    frasco: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/>',
+    obra: '<path d="M3 21h18M5 21V9l7-5 7 5v12"/><path d="M10 21v-6h4v6"/>',
+    pessoas: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5a3 3 0 010 6M21 20c0-2.6-1.6-4.8-4-5.6"/>',
+    balanca: '<path d="M12 4v16M6 20h12M5 7h14"/><path d="M5 7l-3 6a3 3 0 006 0L5 7zM19 7l-3 6a3 3 0 006 0l-3-6z"/>',
+    monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    sacola: '<path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/>'
+  };
+  const svg = (k) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + ICONES[k] + '</svg>';
+
+  const STATUS = {
+    alerta:   { rotulo: 'Alerta',          cor: '--red' },
+    atencao:  { rotulo: 'Atenção',         cor: '--amber' },
+    mapeado:  { rotulo: 'Dados mapeados',  cor: '--teal' },
+    semacesso:{ rotulo: 'Sem acesso',      cor: '--grey' },
+    centro:   { rotulo: 'Fundação pronta', cor: '--violet' }
+  };
+  const SEV = { alerta: '--red', atencao: '--amber', info: '--teal' };
+
+  // Ângulo em graus no sentido horário a partir das 3 horas.
+  const AGENTES = [
+    { id: 'diretor', nome: 'Diretor IA', sub: 'Orquestra e reporta à diretoria', icone: 'diretor', status: 'centro', centro: true,
+      papel: 'Recebe o que cada agente encontra, prioriza e monta o resumo para a diretoria e as gestoras regionais. Nunca vê dado pessoal: só métricas agregadas.',
+      fontes: ['Todas as fontes, via camada core/mart'],
+      fase: 'Fundação (Fase 1) pronta no repositório',
+      metricas: [['116', 'unidades mestras'], ['86–98%', 'casamento por fonte'], ['28', 'de-para a revisar']],
+      achados: [
+        { sev: 'atencao', txt: 'Projeto Supabase do Cérebro ainda sem acesso para a sessão', det: 'piiozonbqdewleihldwz' },
+        { sev: 'info', txt: 'Próximas conexões: METAS, Ativos e Wiki', det: 'função cerebro-export pronta para aplicar' }
+      ] },
+    { id: 'faturamento', nome: 'Faturamento', sub: 'Convênios e apoios', icone: 'recibo', status: 'alerta', angulo: -72,
+      papel: 'Cruza o que foi faturado no Unilab com o que os convênios pagaram e com o que os laboratórios de apoio cobraram.',
+      fontes: ['CONCILIA FATURAMENTO', 'Conciliação de Apoios'], fase: 'Fase 2',
+      metricas: [['7.396', 'notas não localizadas'], ['1.435', 'conciliações ativas'], ['68', 'auditorias de apoio']],
+      achados: [
+        { sev: 'alerta', txt: 'Notas pagas que não aparecem no faturamento', det: 'Endo 5.035 · Conte 1.649 · Widal 662 · sem laboratório 50', val: 'R$ 623,8 mil' },
+        { sev: 'alerta', txt: 'Divergência registrada nas conciliações ativas', det: 'Endo concentra R$ 2,58 mi', val: 'R$ 3,1 mi' },
+        { sev: 'atencao', txt: 'DB Lab cobrou abaixo do acordado: validar o sinal antes de virar alerta', det: 'abr/2025 a set/2026', val: '−R$ 2,2 mi' }
+      ] },
+    { id: 'financeiro', nome: 'Financeiro', sub: 'DRE e contas fixas', icone: 'moeda', status: 'mapeado', angulo: -36,
+      papel: 'Lê o DRE por unidade, o custo por exame e as contas fixas para calcular margem e apontar desvios de custo.',
+      fontes: ['DRE VERSÃO FINAL', 'CONTAS FIXAS'], fase: 'Fase 2',
+      metricas: [['114', 'postos no DRE de 09/2026'], ['13', 'meses de DRE'], ['2.771', 'pagamentos de contas fixas']],
+      achados: [
+        { sev: 'info', txt: 'DRE de 09/2025 a 09/2026, com cerca de 30 métricas por posto', det: 'último envio em 20/10/2026' },
+        { sev: 'info', txt: 'Contas fixas de 63 filiais, com CNPJ em quase todas', det: '1 filial duplicada (Columbia)' }
+      ] },
+    { id: 'metas', nome: 'Metas e Comercial', sub: 'Meta x realizado', icone: 'alvo', status: 'atencao', angulo: 0,
+      papel: 'Acompanha meta e realizado por unidade e região, projeta o fechamento do mês e avisa quem está abaixo do ritmo.',
+      fontes: ['METAS - GRUPOWP'], fase: 'Fase 1',
+      metricas: [['83', 'unidades com faturamento'], ['10', 'regiões'], ['735', 'clientes no CRM']],
+      achados: [
+        { sev: 'atencao', txt: '22 postos do relatório do Unilab não existem no cadastro do METAS', det: 'administrativos, produção, hospitais e alguns postos' },
+        { sev: 'info', txt: 'Faturamento de jan/2025 a out/2026; metas até dez/2026', det: 'relatório do Unilab só a partir de jan/2026' }
+      ] },
+    { id: 'compras', nome: 'Compras', sub: 'Pedidos e estoque', icone: 'carrinho', status: 'mapeado', angulo: 36,
+      papel: 'Mede economia nas cotações, tempo de aprovação e consumo de estoque por unidade contra o volume de exames.',
+      fontes: ['COMPRAS WP'], fase: 'Fase 2',
+      metricas: [['433', 'pedidos'], ['201', 'fornecedores'], ['98,1%', 'unidades casadas']],
+      achados: [
+        { sev: 'info', txt: 'Código de unidade bate com o Unilab em 103 de 105', det: '"1" deveria ser 9K; "UNI-01" parece teste' }
+      ] },
+    { id: 'qualidade', nome: 'Qualidade', sub: 'Controle interno (CIQ)', icone: 'frasco', status: 'atencao', angulo: 72,
+      papel: 'Acompanha as corridas de controle de qualidade e cruza equipamentos com falha recorrente com chamados de TI e ativos em manutenção.',
+      fontes: ['CIQ Insights'], fase: 'Fase 3',
+      metricas: [['37', 'equipamentos'], ['5', 'locais'], ['3.530', 'corridas analisadas']],
+      achados: [
+        { sev: 'atencao', txt: '1.000 erros em 3.530 corridas: confirmar como o CIQ conta erro', det: '36 relatórios de 27/07 a 18/10/2026' },
+        { sev: 'info', txt: 'Cobre Endocrimeta, HMTR, HDWC, HNP e Passo Fundo', det: 'não só a Endocrimeta' }
+      ] },
+    { id: 'expansao', nome: 'Expansão', sub: 'Abertura de unidades', icone: 'obra', status: 'alerta', angulo: 108,
+      papel: 'Vigia o checklist de cada abertura e avisa quando um item bloqueante atrasado ameaça a data de inauguração.',
+      fontes: ['ABERTURA DE UNIDADES'], fase: 'Fase 3',
+      metricas: [['8', 'aberturas'], ['1.454', 'itens de checklist'], ['24', 'bloqueantes em aberto']],
+      achados: [
+        { sev: 'alerta', txt: '6 aberturas com inauguração vencida e ainda em andamento', det: 'Sapucaia, Hospital Municipal PF, Centro Lages, Novo Administrativo, Wenceslau, Santa Helena' },
+        { sev: 'alerta', txt: 'Sapucaia: 8 itens bloqueantes abertos', det: 'inauguração prevista para 01/07/2026', val: '8' }
+      ] },
+    { id: 'pessoas', nome: 'Pessoas', sub: 'Vagas e desempenho', icone: 'pessoas', status: 'mapeado', angulo: 144,
+      papel: 'Mostra vagas abertas, tempo de preenchimento e PDIs pendentes. Só números agregados, nunca dados de candidatos ou avaliações individuais.',
+      fontes: ['VAGAS GRUPO WP', 'Avaliação de desempenho'], fase: 'Fase 4',
+      metricas: [['46', 'vagas'], ['4.649', 'candidaturas'], ['590', 'PDIs']],
+      achados: [
+        { sev: 'info', txt: 'Vagas não têm unidade, só cidade e empresa', det: 'análise por posto depende de ajuste no sistema' }
+      ] },
+    { id: 'juridico', nome: 'Jurídico', sub: 'Chamados e prazos', icone: 'balanca', status: 'semacesso', angulo: 180,
+      papel: 'Contaria chamados jurídicos por laboratório e status, sem conteúdo dos casos.',
+      fontes: ['JURIDICO'], fase: 'A definir',
+      metricas: [['—', 'sem leitura']],
+      achados: [
+        { sev: 'atencao', txt: 'Banco fora do Lovable e da organização Supabase conectada', det: 'precisa de quem administra o projeto' }
+      ] },
+    { id: 'ti', nome: 'TI e Ativos', sub: 'Chamados e equipamentos', icone: 'monitor', status: 'atencao', angulo: 216,
+      papel: 'Mede volume e tempo de resolução de chamados por unidade e aponta os ativos que mais dão problema.',
+      fontes: ['Wiki + Suporte', 'Gestão de Ativos'], fase: 'Fase 1',
+      metricas: [['764', 'chamados'], ['3.364', 'ativos'], ['105', 'locais']],
+      achados: [
+        { sev: 'atencao', txt: 'Localização do ativo é texto livre, sem ligação com o cadastro de locais', det: '67 grafias diferentes' },
+        { sev: 'atencao', txt: 'Códigos de loja em conflito com o Unilab', det: '96 "Apoio Pasteur", 87 "Homecare Endo 2", 51 "Livre"' },
+        { sev: 'info', txt: 'Direção WP é quem mais abre chamado', det: '112 chamados' }
+      ] },
+    { id: 'ecommerce', nome: 'E-commerce', sub: 'Vendas online', icone: 'sacola', status: 'alerta', angulo: 252,
+      papel: 'Acompanha o funil por marca e unidade, pedidos pendentes, cupons e conversões do RD Station.',
+      fontes: ['Endocrimeta e-commerce', 'Widal Pacheco e-commerce', 'Santa Helena'], fase: 'Fase 4',
+      metricas: [['2.731', 'pedidos'], ['18,3%', 'pendentes na Widal'], ['6,9%', 'pendentes na Endo']],
+      achados: [
+        { sev: 'alerta', txt: 'Nenhum pedido aparece como enviado ao Unilab', det: 'unilab_sent falso em 100% dos pedidos das duas lojas', val: '2.731' },
+        { sev: 'atencao', txt: 'Widal com 193 pedidos pendentes de 1.052', det: 'maio a outubro de 2026', val: '18,3%' }
+      ] }
+  ];
+
+  const css = getComputedStyle(document.documentElement);
+  const cor = (v) => css.getPropertyValue(v).trim();
+  const palco = document.getElementById('palco');
+  const canvas = document.getElementById('ceu');
+  const ctx = canvas.getContext('2d');
+  const camadaNos = document.getElementById('nos');
+  const reduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, H = 0, S = 0, cx = 0, cy = 0, estreito = false;
+  let selecionado = 'diretor';
+
+  // Nós --------------------------------------------------------------------
+  const botoes = new Map();
+  for (const a of AGENTES) {
+    const b = document.createElement('button');
+    b.className = 'no' + (a.centro ? ' centro' : '');
+    b.type = 'button';
+    b.style.setProperty('--cor', 'var(' + STATUS[a.status].cor + ')');
+    b.setAttribute('aria-label', a.nome + ': ' + STATUS[a.status].rotulo);
+    b.innerHTML = '<span class="ponto"></span><span class="cartao"><span class="icone">' + svg(a.icone) +
+      '</span><span class="textos"><span class="nome">' + a.nome + '</span><span class="sub">' + a.sub + '</span></span></span>';
+    b.addEventListener('click', () => selecionar(a.id));
+    camadaNos.appendChild(b);
+    botoes.set(a.id, b);
+  }
+
+  function posicionar() {
+    const r = palco.getBoundingClientRect();
+    W = r.width; H = r.height; S = Math.min(W, H);
+    estreito = W < 960;
+    palco.classList.toggle('compacto', estreito);
+    cx = W * 0.5; cy = H * (estreito ? 0.47 : 0.46);
+    const rx = W * (estreito ? 0.33 : 0.37);
+    const ry = H * (estreito ? 0.36 : 0.36);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    for (const a of AGENTES) {
+      const b = botoes.get(a.id);
+      if (a.centro) { a.x = cx; a.y = cy; }
+      else {
+        const t = (a.angulo - (estreito ? 18 : 0)) * Math.PI / 180;
+        a.x = cx + rx * Math.cos(t);
+        a.y = cy + ry * Math.sin(t);
+      }
+      b.style.left = a.x + 'px';
+      b.style.top = a.y + 'px';
+      // Cartão para fora do centro quando cabe; senão, para dentro.
+      if (!a.centro && !estreito) {
+        const largura = 214 + 28;
+        const paraDireita = a.x >= cx;
+        const cabeFora = paraDireita ? a.x + largura <= W - 12 : a.x - largura >= 12;
+        const direita = cabeFora ? paraDireita : !paraDireita;
+        b.classList.toggle('esquerda', !direita);
+      } else {
+        b.classList.remove('esquerda');
+      }
+    }
+  }
+
+  // Partículas ---------------------------------------------------------------
+  // Posições guardadas em unidades de S (menor lado do palco), relativas ao nó ou ao centro.
+  const particulas = [];
+  let semente = 7;
+  const aleatorio = () => (semente = (semente * 16807) % 2147483647) / 2147483647;
+  const gauss = () => { let u = 0, v = 0; while (!u) u = aleatorio(); while (!v) v = aleatorio(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+  const corDoGrupo = (a) => a.status === 'mapeado' ? 'teal' : a.status === 'semacesso' ? 'grey' : 'magenta';
+  for (const a of AGENTES) {
+    if (a.centro) continue;
+    const n = a.status === 'semacesso' ? 160 : 460;
+    const t = a.angulo * Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      particulas.push({
+        dono: a, grupo: corDoGrupo(a),
+        ox: Math.cos(t) * 0.03 + gauss() * 0.045, oy: Math.sin(t) * 0.03 + gauss() * 0.036,
+        tam: aleatorio() < 0.2 ? 2.6 : 1.7, alfa: 0.4 + aleatorio() * 0.6,
+        fase: aleatorio() * 6.28, vel: 0.3 + aleatorio() * 0.8, amp: 1 + aleatorio() * 2.5
+      });
+    }
+  }
+  // Anel em volta do Diretor IA.
+  for (let i = 0; i < 2600; i++) {
+    const ang = aleatorio() * Math.PI * 2;
+    const raio = 0.21 + gauss() * 0.03 + Math.sin(ang * 3) * 0.015;
+    particulas.push({
+      anel: true, grupo: aleatorio() < 0.82 ? 'magenta' : 'violet',
+      ang, raio, tam: aleatorio() < 0.15 ? 2.4 : 1.6, alfa: 0.3 + aleatorio() * 0.6,
+      fase: aleatorio() * 6.28, vel: 0.2 + aleatorio() * 0.6, amp: 1 + aleatorio() * 2
+    });
+  }
+  // Poeira de fundo.
+  for (let i = 0; i < 260; i++) {
+    particulas.push({ poeira: true, grupo: 'violet', px: aleatorio(), py: aleatorio(), tam: 1, alfa: 0.05 + aleatorio() * 0.18, fase: aleatorio() * 6.28, vel: 0.2 + aleatorio() * 0.4, amp: 0 });
+  }
+
+  const CORES = { teal: cor('--teal'), magenta: cor('--magenta'), violet: cor('--violet'), grey: cor('--grey') };
+  const grupos = { teal: [], magenta: [], violet: [], grey: [] };
+  for (const p of particulas) grupos[p.grupo].push(p);
+
+  // Pulsos de dados viajando nas linhas.
+  const pulsos = [];
+  function novoPulso() {
+    const ligados = AGENTES.filter((a) => !a.centro && a.status !== 'semacesso');
+    const a = ligados[Math.floor(Math.random() * ligados.length)];
+    const urgente = a.status === 'alerta';
+    pulsos.push({ a, t: 0, dur: urgente ? 1.6 : 2.4, entrada: Math.random() < 0.8, cor: cor(STATUS[a.status].cor) });
+  }
+
+  function desenhar(tempo) {
+    const t = tempo / 1000;
+    ctx.clearRect(0, 0, W, H);
+
+    // Brilho do centro.
+    const brilho = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.2);
+    brilho.addColorStop(0, 'rgba(157,132,255,0.42)');
+    brilho.addColorStop(0.4, 'rgba(196,91,220,0.12)');
+    brilho.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = brilho;
+    ctx.fillRect(0, 0, W, H);
+
+    // Linhas até o Diretor IA (tracejadas: ainda sem conexão automática).
+    ctx.setLineDash([3, 6]);
+    for (const a of AGENTES) {
+      if (a.centro) continue;
+      const ativo = a.id === selecionado;
+      ctx.strokeStyle = ativo ? 'rgba(245,200,74,0.7)' : 'rgba(238,234,246,0.22)';
+      ctx.lineWidth = ativo ? 1.4 : 1;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(cx, cy); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Partículas, somando luz.
+    ctx.globalCompositeOperation = 'lighter';
+    const giro = reduzido ? 0 : t * 0.015;
+    for (const nome in grupos) {
+      ctx.fillStyle = CORES[nome];
+      for (const p of grupos[nome]) {
+        const osc = Math.sin(t * p.vel + p.fase);
+        let x, y;
+        if (p.anel) {
+          const ang = p.ang + giro;
+          x = cx + Math.cos(ang) * p.raio * S * 1.35 + osc * p.amp;
+          y = cy + Math.sin(ang) * p.raio * S + Math.cos(t * p.vel + p.fase) * p.amp;
+        } else if (p.poeira) {
+          x = p.px * W; y = p.py * H;
+        } else {
+          x = p.dono.x + p.ox * S + osc * p.amp;
+          y = p.dono.y + p.oy * S + Math.cos(t * p.vel * 0.9 + p.fase) * p.amp;
+        }
+        let alfa = p.alfa * (0.65 + 0.35 * Math.sin(t * p.vel * 1.7 + p.fase));
+        if (p.dono && p.dono.id === selecionado) alfa = Math.min(1, alfa * 1.6);
+        ctx.globalAlpha = alfa;
+        ctx.fillRect(x, y, p.tam, p.tam);
+      }
+    }
+
+    // Pulsos.
+    for (let i = pulsos.length - 1; i >= 0; i--) {
+      const p = pulsos[i];
+      const k = Math.min(1, p.t / p.dur);
+      const f = p.entrada ? k : 1 - k;
+      const x = p.a.x + (cx - p.a.x) * f;
+      const y = p.a.y + (cy - p.a.y) * f;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 9);
+      g.addColorStop(0, p.cor); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = Math.sin(k * Math.PI);
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 9, y - 9, 18, 18);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  let anterior = 0, acumulado = 0;
+  function quadro(tempo) {
+    const dt = Math.min(0.05, (tempo - anterior) / 1000 || 0);
+    anterior = tempo;
+    acumulado += dt;
+    if (acumulado > 0.35) { acumulado = 0; if (pulsos.length < 14) novoPulso(); }
+    for (const p of pulsos) p.t += dt;
+    for (let i = pulsos.length - 1; i >= 0; i--) if (pulsos[i].t >= pulsos[i].dur) pulsos.splice(i, 1);
+    desenhar(tempo);
+    requestAnimationFrame(quadro);
+  }
+
+  // Painel -----------------------------------------------------------------
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const linhaAchado = (x, tag) =>
+    '<' + tag + ' class="achado" style="--sev: var(' + SEV[x.sev] + ')"' + (tag === 'button' ? ' type="button" data-agente="' + x.agente + '"' : '') + '>' +
+    '<span>' + esc(x.txt) + (x.det ? '<small>' + esc(x.det) + '</small>' : '') + (x.nomeAgente ? '<small>' + esc(x.nomeAgente) + '</small>' : '') + '</span>' +
+    '<span class="valor">' + (x.val ? esc(x.val) : '') + '</span></' + tag + '>';
+
+  function selecionar(id) {
+    selecionado = id;
+    const a = AGENTES.find((x) => x.id === id);
+    for (const [k, b] of botoes) b.setAttribute('aria-pressed', String(k === id));
+    const st = STATUS[a.status];
+    document.getElementById('detalhe').innerHTML =
+      '<h3>' + (a.centro ? 'Orquestrador' : 'Agente') + '</h3>' +
+      '<h2>' + esc(a.nome) + ' <span class="pilula" style="color: var(' + st.cor + ')">' + st.rotulo + '</span></h2>' +
+      '<p>' + esc(a.papel) + '</p>' +
+      '<div class="metricas">' + a.metricas.map((m) => '<div class="metrica"><b>' + esc(m[0]) + '</b><span>' + esc(m[1]) + '</span></div>').join('') + '</div>' +
+      '<h3>Achados</h3><ul class="achados">' + a.achados.map((x) => '<li>' + linhaAchado(x, 'div') + '</li>').join('') + '</ul>' +
+      '<h3>Fontes</h3><div class="chips">' + a.fontes.map((f) => '<span class="chip">' + esc(f) + '</span>').join('') + '</div>' +
+      '<p class="nota">Conexão automática: ' + esc(a.fase) + '. Números lidos em 23/10/2026.</p>';
+    desenhar(performance.now());
+  }
+
+  const peso = { alerta: 0, atencao: 1 };
+  const fila = AGENTES.flatMap((a) => a.achados.filter((x) => x.sev !== 'info').map((x) => ({ ...x, agente: a.id, nomeAgente: a.nome })))
+    .sort((p, q) => peso[p.sev] - peso[q.sev]);
+  const lista = document.getElementById('lista-fila');
+  lista.innerHTML = fila.map((x) => '<li>' + linhaAchado(x, 'button') + '</li>').join('');
+  lista.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-agente]');
+    if (!b) return;
+    selecionar(b.dataset.agente);
+    botoes.get(b.dataset.agente).focus({ preventScroll: true });
+    palco.scrollIntoView({ behavior: reduzido ? 'auto' : 'smooth', block: 'center' });
+  });
+
+  posicionar();
+  selecionar('diretor');
+  new ResizeObserver(() => { posicionar(); desenhar(performance.now()); }).observe(palco);
+  if (reduzido) desenhar(0); else requestAnimationFrame(quadro);
+})();
+</script>
